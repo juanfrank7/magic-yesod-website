@@ -1,0 +1,10 @@
+h2 {
+    color: #45acd0
+}
+
+li {
+    line-height: 2em;
+    font-size: 16px
+}
+
+
