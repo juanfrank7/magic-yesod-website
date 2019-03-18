@@ -1,0 +1,32 @@
+<div>
+
+<h1> Lista de cartas
+$if null cards
+    <p> Todavia no hay cartas!
+$else
+    <a  href=@{CardNewR} .btn .btn-primary .pull-right>
+            <span .glyphicon .glyphicon-plus>
+            Crear
+            
+    <table .table .table-responsive .table-hover>
+        <thead>
+                     <th> Nombre               
+                     <th> Mana
+                     <th> Tipo
+                     <th> Descrip
+        
+        $forall Entity cardId card <- cards
+        
+            <tbody>
+                <tr>
+                    <td> 
+                        #{cardName card}
+
+                    <td>
+                        #{cardMana card}
+                          
+                    <td>
+                        #{cardCtype card}
+
+                    <td>
+                        #{cardDescr card}

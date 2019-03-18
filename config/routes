@@ -9,4 +9,6 @@
 
 / HomeR GET
 
+/card CardNewR GET POST 
 
+/cardList CardListR GET 

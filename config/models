@@ -6,9 +6,18 @@ User
     password Text Maybe
     UniqueUser ident
     deriving Typeable
+
 Email
     email Text
     userId UserId Maybe
     verkey Text Maybe
     UniqueEmail email
 
+Card 
+    name Text
+    mana Int
+    ctype Text
+    descr Text
+    atk Int Maybe
+    def Int Maybe
+    deriving Show
