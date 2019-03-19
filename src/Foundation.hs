@@ -113,7 +113,7 @@ instance Yesod App where
                     }
                 , NavbarLeft $ MenuItem
                     { menuItemLabel = "Cards"
-                    , menuItemRoute = CardListR
+                    , menuItemRoute = CardNewR
                     , menuItemAccessCallback = isJust muser
                     }
                 , NavbarRight $ MenuItem

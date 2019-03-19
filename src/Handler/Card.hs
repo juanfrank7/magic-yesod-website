@@ -8,6 +8,7 @@
 module Handler.Card where
 
 import           Control.Applicative   ((<$>), (<*>))
+import           Data.Text             (Text)
 import           Import
 import           Yesod.Form.Bootstrap3 (BootstrapFormLayout (..),
                                         renderBootstrap3)
@@ -15,13 +16,18 @@ import           Yesod.Form.Bootstrap3 (BootstrapFormLayout (..),
 
 cardForm :: Maybe Card -> AForm Handler Card
 cardForm mcard = Card
-    <$> areq textField "Name" (cardName <$> mcard)
-    <*> areq intField  "Mana" (cardMana <$> mcard)
-    <*> areq textField "Ctype"(cardCtype <$> mcard)
-    <*> areq textField "Descr"(cardDescr <$> mcard)
-    <*> aopt intField  "Atk"  (cardAtk <$> mcard)
-    <*> aopt intField  "Def"  (cardDef <$> mcard)
+    <$> areq textField     "Name"   (cardName <$> mcard)
+    <*> areq cardManaField "Mana"   (cardMana <$> mcard)
+    <*> areq textField     "Type"   (cardCtype <$> mcard)
+    <*> areq textField     "Text"   (cardDescr <$> mcard)
+    <*> aopt cardAtkField  "Attack" (cardAtk <$> mcard)
+    <*> aopt intField      "Defense"(cardDef <$> mcard)
+  where
+    mgMsg :: Text
+    mgMsg = "No puede tener valor negativo"
 
+    cardManaField = checkBool (> 0) mgMsg intField
+    cardAtkField  = checkBool (> 0) mgMsg intField
 
 getCardNewR ::  Handler Html
 getCardNewR = do

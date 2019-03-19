@@ -13,7 +13,7 @@ $else
                      <th> Nombre               
                      <th> Mana
                      <th> Tipo
-                     <th> Descrip
+                     <th> Texto
         
         $forall Entity cardId card <- cards
         

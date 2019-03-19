@@ -1,5 +1,5 @@
 <div .container>
-    <h3>Ingresa datos
+    <h3>Ingresa datos de la carta 
     <form method=post action=@{actionR} encType=#{encoding}>
          <div .row>
              ^{widget}   
