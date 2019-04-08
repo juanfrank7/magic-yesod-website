@@ -6,6 +6,7 @@
 {-# LANGUAGE RankNTypes            #-}
 {-# LANGUAGE TemplateHaskell       #-}
 {-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE ViewPatterns          #-}
 
 module Foundation where
 
@@ -116,6 +117,11 @@ instance Yesod App where
                     , menuItemRoute = CardNewR
                     , menuItemAccessCallback = isJust muser
                     }
+                 , NavbarLeft $ MenuItem
+                    { menuItemLabel = "Json"
+                    , menuItemRoute = CardsJsonR
+                    , menuItemAccessCallback = isNothing muser
+                    }
                 , NavbarRight $ MenuItem
                     { menuItemLabel = "Login"
                     , menuItemRoute = AuthR LoginR
@@ -155,11 +161,14 @@ instance Yesod App where
     isAuthorized HomeR _       = return Authorized
     isAuthorized FaviconR _    = return Authorized
     isAuthorized RobotsR _     = return Authorized
-    isAuthorized (StaticR _) _ = return Authorized
+    isAuthorized (StaticR _) _ = return Authorized 
+    isAuthorized CardsJsonR _  = return Authorized 
 
     isAuthorized CardListR _   = isAuthenticated
     isAuthorized CardNewR _    = isAuthenticated
-
+    isAuthorized (CardJsonR _) _  = isAuthenticated 
+   
+ 
     -- This function creates static content files in the static folder
     -- and names them based on a hash of their content. This allows
     -- expiration dates to be set far in the future without worry of
