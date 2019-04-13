@@ -42,3 +42,9 @@ instance FromJSON Card where
 
     parseJSON _ = mzero
 
+data Privileges = 
+  CreateCard 
+  | SeeCard
+  deriving (Show,Read,Eq)
+
+derivePersistField "Privileges"

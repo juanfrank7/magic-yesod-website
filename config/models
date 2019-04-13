@@ -5,6 +5,7 @@ User
     ident Text
     password Text Maybe
     UniqueUser ident
+    perms [Privileges]
     deriving Typeable
 
 Email

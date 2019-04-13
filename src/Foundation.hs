@@ -10,20 +10,25 @@
 
 module Foundation where
 
-import           Control.Monad.Logger (LogSource)
-import           Database.Persist.Sql (ConnectionPool, runSqlPool)
+import           Control.Monad.Logger     (LogSource)
+import           Database.Persist.Sql     (ConnectionPool, runSqlPool)
 import           Import.NoFoundation
-import           Text.Hamlet          (hamletFile)
-import           Text.Jasmine         (minifym)
+import           Text.Hamlet              (hamletFile)
+import           Text.Jasmine             (minifym)
 
--- Used only when in "auth-dummy-login" setting is enabled.
-import           Yesod.Auth.Dummy
+import qualified Data.CaseInsensitive     as CI
+import qualified Data.Text.Encoding       as TE
+import qualified Data.List                as L
+import           Yesod.Auth.OAuth2.Google
+import           Yesod.Core.Types         (Logger)
+import qualified Yesod.Core.Unsafe        as Unsafe
+import           Yesod.Default.Util       (addStaticContentExternal)
 
-import qualified Data.CaseInsensitive as CI
-import qualified Data.Text.Encoding   as TE
-import           Yesod.Core.Types     (Logger)
-import qualified Yesod.Core.Unsafe    as Unsafe
-import           Yesod.Default.Util   (addStaticContentExternal)
+clientId :: Text
+clientId = "420817418225-g4jtoq5o4g0tubqsnbmjp94vct97egh7.apps.googleusercontent.com"
+
+clientSecret :: Text
+clientSecret = "PbOAC1g2aXlYvN3TnsGkp3CU"
 
 -- | The foundation datatype for your application. This can be a good place to
 -- keep settings and values requiring initialization before your application
@@ -113,14 +118,19 @@ instance Yesod App where
                     , menuItemAccessCallback = True
                     }
                 , NavbarLeft $ MenuItem
-                    { menuItemLabel = "Cards"
+                    { menuItemLabel = "New Card"
                     , menuItemRoute = CardNewR
                     , menuItemAccessCallback = isJust muser
+                    } 
+                , NavbarLeft $ MenuItem
+                    { menuItemLabel = "List Cards"
+                    , menuItemRoute = CardListR
+                    , menuItemAccessCallback = isJust muser
                     }
-                 , NavbarLeft $ MenuItem
+                , NavbarLeft $ MenuItem
                     { menuItemLabel = "Json"
                     , menuItemRoute = CardsJsonR
-                    , menuItemAccessCallback = isNothing muser
+                    , menuItemAccessCallback = isJust muser
                     }
                 , NavbarRight $ MenuItem
                     { menuItemLabel = "Login"
@@ -157,18 +167,17 @@ instance Yesod App where
 
     isAuthorized :: Route App -> Bool -> Handler AuthResult
     -- Routes not requiring authentication.
-    isAuthorized (AuthR _) _   = return Authorized
-    isAuthorized HomeR _       = return Authorized
-    isAuthorized FaviconR _    = return Authorized
-    isAuthorized RobotsR _     = return Authorized
-    isAuthorized (StaticR _) _ = return Authorized 
-    isAuthorized CardsJsonR _  = return Authorized 
+    isAuthorized (AuthR _) _     = return Authorized
+    isAuthorized HomeR _         = return Authorized
+    isAuthorized FaviconR _      = return Authorized
+    isAuthorized RobotsR _       = return Authorized
+    isAuthorized (StaticR _) _   = return Authorized
+      
+    isAuthorized CardListR _     = isAuthenticated 
+    isAuthorized (CardJsonR _) _ = isAuthenticated
+    isAuthorized CardsJsonR _    = isAuthenticated
+    isAuthorized CardNewR _ = authorizedForPrivileges [CreateCard]
 
-    isAuthorized CardListR _   = isAuthenticated
-    isAuthorized CardNewR _    = isAuthenticated
-    isAuthorized (CardJsonR _) _  = isAuthenticated 
-   
- 
     -- This function creates static content files in the static folder
     -- and names them based on a hash of their content. This allows
     -- expiration dates to be set far in the future without worry of
@@ -247,12 +256,13 @@ instance YesodAuth App where
             Nothing -> Authenticated <$> insert User
                 { userIdent = credsIdent creds
                 , userPassword = Nothing
+                , userPerms = []
                 }
 
     -- You can add other plugins like Google Email, email or OAuth here
     authPlugins :: App -> [AuthPlugin App]
-    authPlugins app = [authDummy | appAuthDummyLogin $ appSettings app]
-        -- Enable authDummy login if enabled.
+    authPlugins _ = [oauth2GoogleScoped ["email", "profile"] clientId clientSecret]
+
 
 -- | Access function to determine if a user is logged in.
 isAuthenticated :: Handler AuthResult
@@ -261,6 +271,23 @@ isAuthenticated = do
     return $ case muid of
         Nothing -> Unauthorized "You must login to access this page"
         Just _  -> Authorized
+
+authorizedForPrivileges :: [Privileges] -> Handler AuthResult
+authorizedForPrivileges perms = do
+    mu <- maybeAuth
+    return $ case mu of
+     Nothing -> Unauthorized "You must login to access this page"
+     Just u@(Entity userId user) ->
+       if hasPrivileges u perms
+            then Authorized
+            else Unauthorized "Don't have required privileges"
+
+hasPrivilege :: Entity User -> Privileges -> Bool
+hasPrivilege u p = hasPrivileges u [p]
+
+hasPrivileges :: Entity User -> [Privileges] -> Bool
+hasPrivileges (Entity _ user) perms = null (perms L.\\ userPerms user)
+
 
 instance YesodAuthPersist App
 
